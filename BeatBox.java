@@ -5,24 +5,26 @@ import java.util.*;
 import java.awt.event.*;
 
 public class BeatBox {
-    JFrame frame;
-    ArrayList<JCheckBox> checkboxList;
     JPanel mainPanel;
+    ArrayList<JCheckBox> checkboxList;
     Sequencer sequencer;
     Sequence sequence;
     Track track;
+    JFrame frame;
 
-    String[] instrumentNames = { "Bass Drum", "Closed Hi-Hat", "Open Hi-Hat", "Acoustic Snare", "Crash Cymbal", 
-    "Hand Clap", "High Tom", "Hi Bongo", "Maracas", "Whistle", "Low Conga", "Cowbell", "Vibraslap", "Low-mid Tom",
-    "High Agogo", "Open Hi Conga" };
-    int[] instruments = { 35, 42, 46, 38, 49, 39, 50, 60, 70, 72, 64, 56, 58, 47, 67, 63 };
+    String[] instrumentNames = {"Bass Drum", "Closed Hi-Hat", 
+       "Open Hi-Hat","Acoustic Snare", "Crash Cymbal", "Hand Clap", 
+       "High Tom", "Hi Bongo", "Maracas", "Whistle", "Low Conga", 
+       "Cowbell", "Vibraslap", "Low-mid Tom", "High Agogo", 
+       "Open Hi Conga"};
+    int[] instruments = {35,42,46,38,49,39,50,60,70,72,64,56,58,47,67,63};
 
     public static void main(String[] args) {
         new BeatBox().buildGui();
     }
 
     public void buildGui() {
-        frame = new JFrame("BeatBox");
+        frame = new JFrame("KMZ - BeatBox");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout layout = new BorderLayout();
         JPanel background = new JPanel(layout);
@@ -40,11 +42,11 @@ public class BeatBox {
         buttonBox.add(stop);
 
         JButton upTempo = new JButton("Tempo Up");
-        //TODO
+        upTempo.addActionListener(new MyUpTempoListener());
         buttonBox.add(upTempo);
 
         JButton downTempo = new JButton("Tempo Down");
-        //TODO
+        downTempo.addActionListener(new MyDownTempoListener());
         buttonBox.add(downTempo);
 
         Box nameBox = new Box(BoxLayout.Y_AXIS);
@@ -94,35 +96,34 @@ public class BeatBox {
     }
 
     public void buildTrackAndStart() {
-        int[] trackList = null;
+		int[] trackList = null;
 
-        sequence.deleteTrack(track);
-        track = sequence.createTrack();
+		sequence.deleteTrack(track);
+		track = sequence.createTrack();
 
-        for (int i = 0; i < 16; i++) {
-            trackList = new int[16];
-            int key = instruments[i];
-            for (int j = 0; j < 16; j++) {
-                JCheckBox c = (JCheckBox)checkboxList.get(j + (16*j));
-                if (c.isSelected()) {
-                    trackList[j] = key;
-                } else {
-                    trackList[j] = 0;
-                }
-            }
-            makeTracks(trackList);
-            track.add(makeEvent(176, 1, 127, 0, 16));
-        }
+		for (int i = 0; i < 16; i++) {
+			trackList = new int[16];
 
-        track.add(makeEvent(192, 9, 1, 0, 15));
-        System.out.println("Track Build - OK");
-        try {
-            sequencer.setSequence(sequence);
-            sequencer.setLoopCount(sequencer.LOOP_CONTINUOUSLY);
-            sequencer.start();
-            sequencer.setTempoInBPM(120);
-            System.out.println("Start Playing...");
-        } catch(Exception e) { e.printStackTrace(); }
+			int key = instruments[i];   
+
+			for (int j = 0; j < 16; j++ ) {         
+				JCheckBox jc = (JCheckBox) checkboxList.get(j + (16*i));
+				if ( jc.isSelected()) {
+					trackList[j] = key;
+				} else {
+					trackList[j] = 0;
+				}                    
+			} 
+			makeTracks(trackList);
+			track.add(makeEvent(176,1,127,0,16));  
+		} 
+		track.add(makeEvent(192,9,1,0,15));      
+		try {
+			sequencer.setSequence(sequence); 
+			sequencer.setLoopCount(sequencer.LOOP_CONTINUOUSLY);                   
+			sequencer.start();
+			sequencer.setTempoInBPM(120);
+		} catch(Exception e) {e.printStackTrace();}
     }
 
     public class MyStartListener implements ActionListener {
@@ -138,6 +139,20 @@ public class BeatBox {
         }
     }
 
+	public class MyUpTempoListener implements ActionListener {
+		public void actionPerformed(ActionEvent a) {
+			float tempoFactor = sequencer.getTempoFactor(); 
+			sequencer.setTempoFactor((float)(tempoFactor * 1.03));
+		}
+	} 
+
+	public class MyDownTempoListener implements ActionListener {
+		public void actionPerformed(ActionEvent a) {
+			float tempoFactor = sequencer.getTempoFactor();
+			sequencer.setTempoFactor((float)(tempoFactor * .97));
+		}
+	}
+	
     public MidiEvent makeEvent(int comd, int chan, int one, int two, int tick) {
         MidiEvent event = null;
         try {
